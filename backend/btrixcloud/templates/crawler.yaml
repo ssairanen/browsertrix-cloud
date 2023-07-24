@@ -64,6 +64,15 @@ spec:
           configMap:
             name: crawl-config-{{ cid }}
 
+        - name: shared-redis-conf
+          configMap:
+            name: shared-redis-conf
+            items:
+              - key: redis.conf
+                path: redis.conf
+
+
+
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -114,6 +123,12 @@ spec:
 
             - name: crawl-data
               mountPath: /crawls
+
+            - name: redis-data
+              mountPath: /data
+
+            - name: shared-redis-conf
+              mountPath: /redis-conf
 
           envFrom:
             - configMapRef:
@@ -185,3 +200,9 @@ spec:
     - protocol: TCP
       port: 9037
       name: screencast
+
+    - protocol: TCP
+      port: 6379
+      name: redis
+
+

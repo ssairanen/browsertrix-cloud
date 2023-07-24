@@ -220,7 +220,7 @@ class BtrixOperator(K8sAPI):
             )
 
         crawl_sts = f"crawl-{crawl_id}"
-        redis_sts = f"redis-{crawl_id}"
+        # redis_sts = f"redis-{crawl_id}"
 
         has_crawl_children = crawl_sts in data.children[STS]
         if has_crawl_children:
@@ -247,11 +247,11 @@ class BtrixOperator(K8sAPI):
         params["scale"] = spec.get("scale", 1)
         params["force_restart"] = spec.get("forceRestart")
 
-        params["redis_url"] = redis_url
+        params["redis_url"] = "redis://localhost:6379/0"
         params["redis_scale"] = 1 if status.initRedis else 0
 
         children = self.load_from_yaml("crawler.yaml", params)
-        children.extend(self.load_from_yaml("redis.yaml", params))
+        # children.extend(self.load_from_yaml("redis.yaml", params))
 
         # to minimize merging, just patch in volumeClaimTemplates from actual children
         # as they may get additional settings that cause more frequent updates
@@ -260,11 +260,11 @@ class BtrixOperator(K8sAPI):
                 "spec"
             ]["volumeClaimTemplates"]
 
-        has_redis_children = redis_sts in data.children[STS]
-        if has_redis_children:
-            children[2]["spec"]["volumeClaimTemplates"] = data.children[STS][redis_sts][
-                "spec"
-            ]["volumeClaimTemplates"]
+        # has_redis_children = redis_sts in data.children[STS]
+        # if has_redis_children:
+        #    children[2]["spec"]["volumeClaimTemplates"] = data.children[STS][redis_sts][
+        #        "spec"
+        #    ]["volumeClaimTemplates"]
 
         return {
             "status": status.dict(exclude_none=True, exclude={"resync_after": True}),

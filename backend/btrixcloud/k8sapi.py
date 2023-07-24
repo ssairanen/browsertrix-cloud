@@ -59,7 +59,7 @@ class K8sAPI:
 
     def get_redis_url(self, crawl_id):
         """get redis url for crawl id"""
-        redis_id = f"redis-{crawl_id}"
+        redis_id = f"crawl-{crawl_id}"
         redis_url = (
             f"redis://{redis_id}-0.{redis_id}.{self.namespace}.svc.cluster.local/0"
         )
