@@ -1,0 +1,26 @@
+---
+
+- hosts: k3s_cluster
+  gather_facts: yes
+  # connection: local # If deploying on localhost
+  become: yes
+  roles:
+    - role: prereq
+    - role: download
+
+- hosts: controller
+  # connection: local # If deploying on localhost
+  become: yes
+  roles:
+    - role: k3s/master
+
+- hosts: node
+  become: yes
+  roles:
+    - role: k3s/node
+
+- hosts: 127.0.0.1
+  connection: local
+  become: yes
+  roles:
+    - role: btrix
