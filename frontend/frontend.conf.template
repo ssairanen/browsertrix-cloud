@@ -59,10 +59,19 @@ server {
 
       auth_request  /access_check;
 
-      set $crawl_prefix scale-$crawl-$num;
-
+      # todo: replace with more general mapping
       if ($num = "0") {
-        set $crawl_prefix $crawl-$num;
+        set $crawl_prefix $crawl-0;
+      }
+
+      if ($num = "1") {
+        set $crawl_prefix scale-$crawl-0;
+        set $svc_suffix ".crawl-scale-$crawl";
+      }
+
+      if ($num = "2") {
+        set $crawl_prefix scale-$crawl-1;
+        set $svc_suffix ".crawl-scale-$crawl";
       }
 
       proxy_pass http://crawl-$crawl_prefix$svc_suffix$fqdn_suffix:9037/ws;

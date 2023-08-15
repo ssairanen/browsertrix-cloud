@@ -110,6 +110,7 @@ data:
   redis.conf: |
     appendonly yes
     dir /data
+    protected-mode no
 
 ---
 apiVersion: v1

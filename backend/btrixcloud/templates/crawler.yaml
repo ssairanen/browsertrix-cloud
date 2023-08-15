@@ -19,8 +19,8 @@ spec:
 
   serviceName: {{ name }}
   replicas: {{ scale }}
-  ordinals:
-    start: {{ 0 if with_redis else 1 }}
+  #ordinals:
+  #  start: {{ 0 if with_redis else 1 }}
 
   podManagementPolicy: OrderedReady
 
@@ -139,6 +139,14 @@ spec:
             - name: crawl-data
               mountPath: /crawls
 
+          {% if with_redis %}
+            - name: redis-data
+              mountPath: /data
+
+            - name: shared-redis-conf
+              mountPath: /redis-conf
+          {% endif %}
+
           envFrom:
             - configMapRef:
                 name: shared-crawler-config
@@ -172,8 +180,8 @@ spec:
         {% endif %}
 
         {% if with_redis %}
-            - name: SKIP_REDIS
-              value: "1"
+            - name: REDIS_ARGS
+              value: "/redis-conf/redis.conf --appendonly yes"
         {% endif %}
 
           resources:
@@ -194,35 +202,6 @@ spec:
             periodSeconds: 120
             failureThreshold: 3
           {% endif %}
-
-        {% if with_redis %}
-        - name: redis
-          image: {{ redis_image }}
-          imagePullPolicy: {{ redis_image_pull_policy }}
-
-          args: ["/redis-conf/redis.conf", "--appendonly", "yes"]
-          volumeMounts:
-            - name: redis-data
-              mountPath: /data
-
-            - name: shared-redis-conf
-              mountPath: /redis-conf
-
-          resources:
-            limits:
-              memory: {{ redis_memory }}
-
-            requests:
-              cpu: {{ redis_cpu }}
-              memory: {{ redis_memory }}
-
-          readinessProbe:
-            exec:
-              command:
-                - redis-cli
-                - ping
-
-        {% endif %}
 
 ---
 apiVersion: v1
