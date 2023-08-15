@@ -115,6 +115,8 @@ spec:
           value: "crawling"
           effect: "NoSchedule"
 
+      priorityClassName: {{ "crawl-main-instance" if with_redis else "crawl-scaled-instance" }}
+
       containers:
         - name: crawler
           image: {{ crawler_image }}
