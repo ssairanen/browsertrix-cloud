@@ -59,7 +59,13 @@ server {
 
       auth_request  /access_check;
 
-      proxy_pass http://crawl-$crawl-$num$svc_suffix$fqdn_suffix:9037/ws;
+      set $crawl_prefix scale-$crawl-$num;
+
+      if ($num = "0") {
+        set $crawl_prefix $crawl-$num;
+      }
+
+      proxy_pass http://crawl-$crawl_prefix$svc_suffix$fqdn_suffix:9037/ws;
       proxy_set_header Host "localhost";
 
       proxy_http_version 1.1;
