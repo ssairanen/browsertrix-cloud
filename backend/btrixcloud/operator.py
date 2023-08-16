@@ -251,6 +251,9 @@ class BtrixOperator(K8sAPI):
         params["redis_storage_hd"] = "5Gi"
         params["with_redis"] = True
 
+        # test 1.27 features
+        params["featureLatest"] = True
+
         children = self.load_from_yaml("crawler.yaml", params)
 
         if scale > 1:

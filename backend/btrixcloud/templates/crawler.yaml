@@ -19,15 +19,18 @@ spec:
 
   serviceName: {{ name }}
   replicas: {{ scale }}
-  #ordinals:
-  #  start: {{ 0 if with_redis else 1 }}
 
   podManagementPolicy: OrderedReady
 
-  # not yet supported
-  #persistentVolumeClaimRetentionPolicy:
-  #  whenDeleted: Delete
-  #  whenScaled: Delete
+
+  {% if featureLatest %}
+  ordinals:
+    start: {{ 0 if with_redis else 1 }}
+
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Delete
+    whenScaled: Delete
+  {% endif %}
 
   volumeClaimTemplates:
     - metadata:
@@ -184,8 +187,8 @@ spec:
         {% if with_redis %}
             - name: REDIS_ARGS
               value: "/redis-conf/redis.conf --appendonly yes"
-        {% else %}
-            - name: CRAWL_ORDINAL_START
+        {% elif not featureLatest %}
+            - name: CRAWL_INDEX_OFFSET
               value: "1"
         {% endif %}
 
