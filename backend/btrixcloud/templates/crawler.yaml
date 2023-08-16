@@ -184,6 +184,9 @@ spec:
         {% if with_redis %}
             - name: REDIS_ARGS
               value: "/redis-conf/redis.conf --appendonly yes"
+        {% else %}
+            - name: CRAWL_ORDINAL_START
+              value: "1"
         {% endif %}
 
           resources:
