@@ -86,10 +86,11 @@ class BaseCrawlOps:
         return res
 
     async def _files_to_resources(self, files, org, crawlid):
-        if files:
-            crawl_files = [CrawlFile(**data) for data in files]
+        if not files:
+            return []
 
-            return await self._resolve_signed_urls(crawl_files, org, crawlid)
+        crawl_files = [CrawlFile(**data) for data in files]
+        return await self._resolve_signed_urls(crawl_files, org, crawlid)
 
     async def get_crawl(
         self,
