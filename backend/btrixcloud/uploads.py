@@ -146,7 +146,7 @@ class UploadOps(BaseCrawlOps):
             id=crawl_id,
             name=name or "New Upload @ " + str(now),
             description=description,
-            collections=collection_uuids,
+            collectionIds=collection_uuids,
             tags=tags,
             userid=user.id,
             oid=org.id,
