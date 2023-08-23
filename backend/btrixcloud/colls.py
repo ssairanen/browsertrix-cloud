@@ -309,7 +309,7 @@ async def update_collection_counts_and_tags(
     total_size = 0
     tags = []
 
-    cursor = crawls.find({"collections": collection_id})
+    cursor = crawls.find({"collectionIds": collection_id})
     crawls = await cursor.to_list(length=10_000)
     for crawl in crawls:
         if crawl["state"] not in SUCCESSFUL_STATES:
