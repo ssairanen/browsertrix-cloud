@@ -352,7 +352,7 @@ def test_add_upload_to_collection(crawler_auth_headers, default_org_id):
         headers=crawler_auth_headers,
     )
     assert _coll_id in r.json()["collectionIds"]
-    assert r.json()["collections"] == [{"name": COLLECTION_NAME, "id": _coll_id}]
+    assert r.json()["collections"] == [{"name": UPDATED_NAME, "id": _coll_id}]
 
 
 def test_download_streaming_collection(crawler_auth_headers, default_org_id):
