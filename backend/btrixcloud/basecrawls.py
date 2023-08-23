@@ -52,11 +52,12 @@ class BaseCrawlOps:
 
     # pylint: disable=duplicate-code, too-many-arguments, too-many-locals
 
-    def __init__(self, mdb, users, crawl_configs, crawl_manager):
+    def __init__(self, mdb, users, crawl_configs, crawl_manager, colls):
         self.crawls = mdb["crawls"]
         self.crawl_configs = crawl_configs
         self.crawl_manager = crawl_manager
         self.user_manager = users
+        self.colls = colls
 
         self.presign_duration_seconds = (
             int(os.environ.get("PRESIGN_DURATION_MINUTES", 60)) * 60
@@ -104,6 +105,11 @@ class BaseCrawlOps:
             res["resources"] = await self._files_to_resources(
                 res.get("files"), org, crawlid
             )
+
+            if res.get("collectionIds"):
+                res["collections"] = await self.colls.get_collection_names(
+                    res.get("collectionIds")
+                )
 
         del res["files"]
         del res["errors"]
@@ -300,7 +306,7 @@ class BaseCrawlOps:
         """Add crawls to collection."""
         for crawl_id in crawl_ids:
             crawl_raw = await self.get_crawl_raw(crawl_id, org)
-            crawl_collections = crawl_raw.get("collections")
+            crawl_collections = crawl_raw.get("collectionIds")
             if crawl_collections and crawl_id in crawl_collections:
                 raise HTTPException(
                     status_code=400, detail="crawl_already_in_collection"
@@ -308,7 +314,7 @@ class BaseCrawlOps:
 
             await self.crawls.find_one_and_update(
                 {"_id": crawl_id},
-                {"$push": {"collections": collection_id}},
+                {"$push": {"collectionIds": collection_id}},
             )
 
     async def remove_from_collection(
@@ -318,14 +324,14 @@ class BaseCrawlOps:
         for crawl_id in crawl_ids:
             await self.crawls.find_one_and_update(
                 {"_id": crawl_id},
-                {"$pull": {"collections": collection_id}},
+                {"$pull": {"collectionIds": collection_id}},
             )
 
     async def remove_collection_from_all_crawls(self, collection_id: uuid.UUID):
         """Remove collection id from all crawls it's currently in."""
         await self.crawls.update_many(
-            {"collections": collection_id},
-            {"$pull": {"collections": collection_id}},
+            {"collectionIds": collection_id},
+            {"$pull": {"collectionIds": collection_id}},
         )
 
     # pylint: disable=too-many-branches, invalid-name, too-many-statements
@@ -393,27 +399,7 @@ class BaseCrawlOps:
             aggregate.extend([{"$match": {"description": description}}])
 
         if collection_id:
-            aggregate.extend([{"$match": {"collections": {"$in": [collection_id]}}}])
-            aggregate.extend(
-                [
-                    {
-                        "$lookup": {
-                            "from": "collections",
-                            "localField": "collections",
-                            "foreignField": "_id",
-                            "as": "result",
-                        }
-                    },
-                    {
-                        "$set": {
-                            "collections": {
-                                "$map": {"input": "$result", "in": {"name": "$$this.name", "id": "$$this.id"}}
-                            }
-                        }
-                    },
-                    {"$project": {"result": 0}},
-                ]
-            )
+            aggregate.extend([{"$match": {"collectionIds": {"$in": [collection_id]}}}])
 
         if sort_by:
             if sort_by not in ("started", "finished", "fileSize"):
@@ -518,12 +504,12 @@ class BaseCrawlOps:
 
 # ============================================================================
 def init_base_crawls_api(
-    app, mdb, users, crawl_manager, crawl_config_ops, orgs, user_dep
+    app, mdb, users, crawl_manager, crawl_config_ops, orgs, colls, user_dep
 ):
     """base crawls api"""
     # pylint: disable=invalid-name, duplicate-code, too-many-arguments, too-many-locals
 
-    ops = BaseCrawlOps(mdb, users, crawl_config_ops, crawl_manager)
+    ops = BaseCrawlOps(mdb, users, crawl_config_ops, crawl_manager, colls)
 
     org_viewer_dep = orgs.org_viewer_dep
     org_crawl_dep = orgs.org_crawl_dep
