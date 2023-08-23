@@ -342,8 +342,8 @@ async def update_collection_counts_and_tags(
 async def update_crawl_collections(collections, crawls, crawl_id: str):
     """Update counts and tags for all collections in crawl"""
     crawl = await crawls.find_one({"_id": crawl_id})
-    crawl_collections = crawl.get("collections")
-    for collection_id in crawl_collections:
+    crawl_coll_ids = crawl.get("collectionIds")
+    for collection_id in crawl_coll_ids:
         await update_collection_counts_and_tags(collections, crawls, collection_id)
 
 
@@ -357,7 +357,7 @@ async def add_successful_crawl_to_collections(
     if auto_add_collections:
         await crawls.find_one_and_update(
             {"_id": crawl_id},
-            {"$set": {"collections": auto_add_collections}},
+            {"$set": {"collectionIds": auto_add_collections}},
         )
         await update_crawl_collections(collections, crawls, crawl_id)
 
