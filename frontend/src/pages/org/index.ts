@@ -76,11 +76,11 @@ export class Org extends LiteElement {
   @property({ type: String })
   orgId!: string;
 
-  @property({ type: Boolean })
-  orgStorageQuotaReached: boolean = false;
-
   @property({ type: String })
   orgTab: OrgTab = defaultTab;
+
+  @state()
+  private orgStorageQuotaReached = false;
 
   @state()
   private org?: OrgData | null;
@@ -118,6 +118,7 @@ export class Org extends LiteElement {
 
   async willUpdate(changedProperties: Map<string, any>) {
     if (changedProperties.has("orgId") && this.orgId) {
+      this.checkIfStorageQuotaReached();
       try {
         this.org = await this.getOrg(this.orgId);
       } catch {
@@ -129,8 +130,12 @@ export class Org extends LiteElement {
           icon: "exclamation-octagon",
         });
       }
-      this.checkIfStorageQuotaReached();
     }
+  }
+
+  disconnectedCallback() {
+    window.clearInterval(this.timerId);
+    super.disconnectedCallback();
   }
 
   private async checkIfStorageQuotaReached() {
@@ -299,7 +304,7 @@ export class Org extends LiteElement {
       return html` <btrix-crawl-detail
         .authState=${this.authState!}
         orgId=${this.orgId}
-        .orgStorageQuotaReached=${this.orgStorageQuotaReached!}
+        ?orgStorageQuotaReached=${this.orgStorageQuotaReached}
         crawlId=${this.params.itemId}
         collectionId=${this.params.collectionId || ""}
         workflowId=${this.params.workflowId || ""}
@@ -312,7 +317,7 @@ export class Org extends LiteElement {
       .authState=${this.authState!}
       userId=${this.userInfo!.id}
       orgId=${this.orgId}
-      .orgStorageQuotaReached=${this.orgStorageQuotaReached!}
+      ?orgStorageQuotaReached=${this.orgStorageQuotaReached}
       ?isCrawler=${this.isCrawler}
       itemType=${ifDefined(this.params.itemType || undefined)}
       ?shouldFetch=${this.orgTab === "crawls" || this.orgTab === "items"}
@@ -330,7 +335,7 @@ export class Org extends LiteElement {
           class="col-span-5 mt-6"
           .authState=${this.authState!}
           orgId=${this.orgId!}
-          .orgStorageQuotaReached=${this.orgStorageQuotaReached!}
+          ?orgStorageQuotaReached=${this.orgStorageQuotaReached}
           workflowId=${workflowId}
           openDialogName=${this.viewStateData?.dialog}
           ?isEditing=${isEditing}
@@ -354,7 +359,7 @@ export class Org extends LiteElement {
     return html`<btrix-workflows-list
       .authState=${this.authState!}
       orgId=${this.orgId!}
-      .orgStorageQuotaReached=${this.orgStorageQuotaReached!}
+      ?orgStorageQuotaReached=${this.orgStorageQuotaReached}
       userId=${this.userInfo!.id}
       ?isCrawler=${this.isCrawler}
     ></btrix-workflows-list>`;
@@ -392,7 +397,7 @@ export class Org extends LiteElement {
         return html`<btrix-collection-edit
           .authState=${this.authState!}
           orgId=${this.orgId!}
-          .orgStorageQuotaReached=${this.orgStorageQuotaReached!}
+          ?orgStorageQuotaReached=${this.orgStorageQuotaReached}
           collectionId=${this.params.collectionId}
           ?isCrawler=${this.isCrawler}
         ></btrix-collection-edit>`;
@@ -412,7 +417,7 @@ export class Org extends LiteElement {
       return html`<btrix-collections-new
         .authState=${this.authState!}
         orgId=${this.orgId!}
-        .orgStorageQuotaReached=${this.orgStorageQuotaReached!}
+        ?orgStorageQuotaReached=${this.orgStorageQuotaReached}
         ?isCrawler=${this.isCrawler}
       ></btrix-collections-new>`;
     }

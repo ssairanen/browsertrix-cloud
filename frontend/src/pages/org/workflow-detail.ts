@@ -45,7 +45,7 @@ export class WorkflowDetail extends LiteElement {
   orgId!: string;
 
   @property({ type: Boolean })
-  orgStorageQuotaReached!: boolean;
+  orgStorageQuotaReached = false;
 
   @property({ type: String })
   workflowId!: string;
@@ -585,13 +585,13 @@ export class WorkflowDetail extends LiteElement {
         () => html`
           <sl-tooltip
             content=${msg("Org Storage Full")}
-            ?disabled=${this.orgStorageQuotaReached === false}
+            ?disabled=${!this.orgStorageQuotaReached}
           >
             <sl-button
               size="small"
               variant="primary"
               class="mr-2"
-              ?disabled=${this.orgStorageQuotaReached === true}
+              ?disabled=${this.orgStorageQuotaReached}
               @click=${() => this.runNow()}
             >
               <sl-icon name="play" slot="prefix"></sl-icon>
@@ -1027,11 +1027,11 @@ export class WorkflowDetail extends LiteElement {
 
           <sl-tooltip
             content=${msg("Org Storage Full")}
-            ?disabled=${this.orgStorageQuotaReached === false}
+            ?disabled=${!this.orgStorageQuotaReached}
           >
             <sl-button
               size="small"
-              ?disabled=${this.orgStorageQuotaReached === true}
+              ?disabled=${this.orgStorageQuotaReached}
               @click=${() => this.runNow()}
             >
               <sl-icon name="play" slot="prefix"></sl-icon>
@@ -1428,10 +1428,10 @@ export class WorkflowDetail extends LiteElement {
   }
 
   private async runNow(): Promise<void> {
-    if (this.orgStorageQuotaReached === true) {
+    if (this.orgStorageQuotaReached) {
       this.notify({
         message: msg(
-          "The org has reached its storage limit. Delete any archived items that are un-needed to free up space, or contact us to purchase a plan with more storage."
+          "The org has reached its storage limit. Delete any archived items that are unneeded to free up space, or contact us to purchase a plan with more storage."
         ),
         variant: "danger",
         icon: "exclamation-octagon",
