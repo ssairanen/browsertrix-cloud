@@ -7,3 +7,4 @@ extra_server_args: "--no-deploy traefik"
 extra_agent_args: ""
 project_name: browsertrix-cloud
 domain: test.browsertrix.cloud
+email: dev@webrecorder.org
