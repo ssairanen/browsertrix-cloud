@@ -35,6 +35,11 @@
 - name: Install ingress-nginx
   ansible.builtin.command: helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
 
+- name: Install Metrics Server
+  ansible.builtin.shell: |
+    helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+    helm upgrade --install metrics-server metrics-server/metrics-server
+
 - name: Output values yaml
   ansible.builtin.template:
     src: k8s-manifest.yaml.j2
