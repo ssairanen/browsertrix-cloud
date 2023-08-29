@@ -40,6 +40,7 @@ class OrgOps:
 
     def __init__(self, mdb, invites):
         self.orgs = mdb["organizations"]
+        self.crawls = mdb["crawls"]
 
         self.router = None
         self.org_viewer_dep = None
@@ -242,6 +243,15 @@ class OrgOps:
     async def get_max_pages_per_crawl(self, org: Organization):
         """Return org-specific max pages per crawl setting or 0."""
         return await get_max_pages_per_crawl(self.orgs, org.id)
+
+    async def export_org(self, org: Organization):
+        """Export all data related to org as JSON."""
+        org_json = await self.orgs.find_one({"_id": org.id})
+
+        cursor = self.crawls.find({"oid": org.id})
+        items_json = await cursor.to_list(length=100_000)
+
+        return {"org": org_json, "archivedItems": items_json}
 
 
 # ============================================================================
@@ -509,5 +519,15 @@ def init_orgs_api(app, mdb, user_manager, invites, user_dep: User):
         update_role = UpdateRole(role=invite.role, email=invite.email)
         await set_role(update_role, org, user)
         return {"added": True}
+
+    @router.get("/export", tags=["organizations"])
+    async def export_org(
+        org: Organization = Depends(org_owner_dep),
+        user: User = Depends(user_dep),
+    ):
+        if not user.is_superuser:
+            raise HTTPException(status_code=403, detail="Not Allowed")
+
+        return await ops.export_org(org)
 
     return ops
