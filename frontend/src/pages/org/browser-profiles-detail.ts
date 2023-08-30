@@ -474,7 +474,7 @@ export class BrowserProfilesDetail extends LiteElement {
       } else {
         this.navTo(`/orgs/${this.orgId}/browser-profiles`);
 
-        if (!data.storage_quota_reached) {
+        if (!data.storageQuotaReached) {
           this.dispatchEvent(
             new CustomEvent("storage-quota-not-reached", { bubbles: true })
           );

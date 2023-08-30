@@ -228,7 +228,7 @@ class CrawlOps(BaseCrawlOps):
 
         quota_reached = self.orgs.storage_quota_reached(org)
 
-        return {"deleted": True, "storage_quota_reached": quota_reached}
+        return {"deleted": True, "storageQuotaReached": quota_reached}
 
     async def get_wacz_files(self, crawl_id: str, org: Organization):
         """Return list of WACZ files associated with crawl."""

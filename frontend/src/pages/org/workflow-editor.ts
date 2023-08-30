@@ -2035,7 +2035,7 @@ https://archiveweb.page/images/${"logo.svg"}`}
           }));
 
       const crawlId = data.run_now_job;
-      const storageQuotaReached = data.storage_quota_reached;
+      const storageQuotaReached = data.storageQuotaReached;
 
       let message = msg("Workflow created.");
       if (crawlId && !storageQuotaReached) {

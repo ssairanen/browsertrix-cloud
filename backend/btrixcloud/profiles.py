@@ -314,7 +314,9 @@ class ProfileOps:
         if not res or res.deleted_count != 1:
             raise HTTPException(status_code=404, detail="profile_not_found")
 
-        return {"success": True}
+        quota_reached = await storage_quota_reached(self.orgs_db, org.id)
+
+        return {"success": True, "storageQuotaReached": quota_reached}
 
     async def delete_profile_browser(self, browserid):
         """delete profile browser immediately"""

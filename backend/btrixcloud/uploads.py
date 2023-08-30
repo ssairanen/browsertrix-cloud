@@ -183,7 +183,7 @@ class UploadOps(BaseCrawlOps):
 
         quota_reached = await storage_quota_reached(self.orgs_db, org.id)
 
-        return {"deleted": True, "storage_quota_reached": quota_reached}
+        return {"deleted": True, "storageQuotaReached": quota_reached}
 
 
 # ============================================================================

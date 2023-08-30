@@ -1496,7 +1496,7 @@ export class WorkflowDetail extends LiteElement {
         }
       );
 
-      if (!data.storage_quota_reached) {
+      if (!data.storageQuotaReached) {
         this.dispatchEvent(
           new CustomEvent("storage-quota-not-reached", { bubbles: true })
         );

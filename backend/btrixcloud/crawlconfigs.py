@@ -966,7 +966,7 @@ def init_crawl_config_api(
             "added": True,
             "id": str(cid),
             "run_now_job": new_job_name,
-            "storage_quota_reached": quota_reached,
+            "storageQuotaReached": quota_reached,
         }
 
     @router.patch("/{cid}", dependencies=[Depends(org_crawl_dep)])
