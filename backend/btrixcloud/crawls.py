@@ -223,7 +223,9 @@ class CrawlOps(BaseCrawlOps):
             await self.crawl_configs.stats_recompute_remove_crawl(cid, size)
             await self.orgs.inc_bytes_stored(org, -size)
 
-        return count
+        quota_reached = self.orgs.storage_quota_reached(org)
+
+        return {"deleted": True, "storage_quota_reached": quota_reached}
 
     async def get_wacz_files(self, crawl_id: str, org: Organization):
         """Return list of WACZ files associated with crawl."""
@@ -767,11 +769,7 @@ def init_crawls_api(
                         status_code=400, detail=f"Error Stopping Crawl: {exc}"
                     )
 
-        res = await ops.delete_crawls(org, delete_list)
-
-        quota_reached = await self.orgs.storage_quota_reached(org)
-
-        return {"deleted": res, "storage_quota_reached": quota_reached}
+        return await ops.delete_crawls(org, delete_list)
 
     @app.get(
         "/orgs/all/crawls/{crawl_id}/replay.json",
