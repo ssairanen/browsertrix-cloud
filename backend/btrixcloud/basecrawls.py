@@ -201,13 +201,14 @@ class BaseCrawlOps:
             size += await self._delete_crawl_files(crawl, org)
             if crawl.get("cid"):
                 cids_to_update.add(crawl.get("cid"))
-            await inc_org_bytes_stored(self.orgs_db, org.id, -size)
 
         query = {"_id": {"$in": delete_list.crawl_ids}, "oid": org.id}
         if type_:
             query["type"] = type_
 
         res = await self.crawls.delete_many(query)
+
+        await inc_org_bytes_stored(self.orgs_db, org.id, -size)
 
         return res.deleted_count, size, cids_to_update
 
