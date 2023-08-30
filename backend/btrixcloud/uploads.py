@@ -28,7 +28,7 @@ from .models import (
     PaginatedResponse,
     User,
 )
-from .orgs import inc_org_bytes_stored
+from .orgs import inc_org_bytes_stored, storage_quota_reached
 from .pagination import paginated_format, DEFAULT_PAGE_SIZE
 from .storages import do_upload_single, do_upload_multipart
 from .utils import dt_now
@@ -55,6 +55,8 @@ class UploadOps(BaseCrawlOps):
         replaceId: Optional[str],
     ):
         """Upload streaming file, length unknown"""
+        if await storage_quota_reached(self.orgs_db, org.id):
+            raise HTTPException(status_code=403, detail="storage_quota_reached")
 
         prev_upload = None
         if replaceId:
@@ -112,6 +114,9 @@ class UploadOps(BaseCrawlOps):
         user: User,
     ):
         """handle uploading content to uploads subdir + request subdir"""
+        if await storage_quota_reached(self.orgs_db, org.id):
+            raise HTTPException(status_code=403, detail="storage_quota_reached")
+
         id_ = uuid.uuid4()
         files = []
         prefix = f"{org.id}/uploads/{id_}/"

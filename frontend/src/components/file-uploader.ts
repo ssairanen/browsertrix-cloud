@@ -29,6 +29,7 @@ type UploadMetadata = {
 };
 
 const ABORT_REASON_USER_CANCEL = "user-canceled";
+const ABORT_REASON_QUOTA_REACHED = "storage_quota_reached";
 
 /**
  * Usage:
@@ -413,10 +414,12 @@ export class FileUploader extends LiteElement {
         collections: this.collectionIds,
         tags: this.tagsToSave,
       });
+
       const data = await this.upload(
         `orgs/${this.orgId}/uploads/stream?${query}`,
         file
       );
+
       this.uploadRequest = null;
 
       if (data.id && data.added) {
@@ -484,6 +487,18 @@ export class FileUploader extends LiteElement {
             status: xhr.status,
           })
         );
+        if (xhr.statusText === ABORT_REASON_QUOTA_REACHED) {
+          this.notify({
+            message: msg(
+              "The org has reached its storage limit. Delete any archived items that are unneeded to free up space, or contact us to purchase a plan with more storage."
+            ),
+            variant: "danger",
+            icon: "exclamation-octagon",
+          });
+          this.dispatchEvent(
+            new CustomEvent("storage-quota-reached", { bubbles: true })
+          );
+        }
       });
       xhr.addEventListener("abort", () => {
         reject(ABORT_REASON_USER_CANCEL);

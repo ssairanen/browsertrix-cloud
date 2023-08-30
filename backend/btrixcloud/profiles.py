@@ -11,7 +11,7 @@ from pydantic import UUID4
 from fastapi import APIRouter, Depends, Request, HTTPException
 import aiohttp
 
-from .orgs import inc_org_bytes_stored
+from .orgs import inc_org_bytes_stored, storage_quota_reached
 from .pagination import DEFAULT_PAGE_SIZE, paginated_format
 from .storages import delete_crawl_file_object
 from .models import (
@@ -142,7 +142,6 @@ class ProfileOps:
         profileid: uuid.UUID = None,
     ):
         """commit profile and shutdown profile browser"""
-
         if not profileid:
             profileid = uuid.uuid4()
 
@@ -174,6 +173,9 @@ class ProfileOps:
             baseid = uuid.UUID(baseid)
 
         oid = uuid.UUID(metadata.get("btrix.org"))
+
+        if await storage_quota_reached(self.orgs, oid):
+            raise HTTPException(status_code=403, detail="storage_quota_reached")
 
         profile = Profile(
             id=profileid,

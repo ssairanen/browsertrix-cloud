@@ -260,6 +260,8 @@ export class WorkflowDetail extends LiteElement {
       if (this.lastCrawlId) {
         this.fetchCurrentCrawlStats();
       }
+      // TODO: Check if storage quota has been exceeded here by running
+      // crawl??
     } catch (e: any) {
       this.notify({
         message:
@@ -1459,9 +1461,22 @@ export class WorkflowDetail extends LiteElement {
         icon: "check2-circle",
         duration: 8000,
       });
-    } catch {
+    } catch (e: any) {
+      let message = msg("Sorry, couldn't run crawl at this time.");
+      if (e.isApiError && e.statusCode === 403) {
+        if (e.detail === "storage_quota_reached") {
+          message = msg(
+            "The org has reached its storage limit. Delete any archived items that are unneeded to free up space, or contact us to purchase a plan with more storage."
+          );
+          this.dispatchEvent(
+            new CustomEvent("storage-quota-reached", { bubbles: true })
+          );
+        } else {
+          message = msg("You do not have permission to run crawls.");
+        }
+      }
       this.notify({
-        message: msg("Sorry, couldn't run crawl at this time."),
+        message: message,
         variant: "danger",
         icon: "exclamation-octagon",
       });

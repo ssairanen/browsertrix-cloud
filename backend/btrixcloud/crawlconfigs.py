@@ -690,7 +690,7 @@ class CrawlConfigOps:
             )
 
         if await self.org_ops.storage_quota_reached(org):
-            raise HTTPException(status_code=507, detail="storage_quota_reached")
+            raise HTTPException(status_code=403, detail="storage_quota_reached")
 
         try:
             crawl_id = await self.crawl_manager.create_crawl_job(
