@@ -314,7 +314,7 @@ class ProfileOps:
         if not res or res.deleted_count != 1:
             raise HTTPException(status_code=404, detail="profile_not_found")
 
-        quota_reached = await storage_quota_reached(self.orgs_db, org.id)
+        quota_reached = await storage_quota_reached(self.orgs, org.id)
 
         return {"success": True, "storageQuotaReached": quota_reached}
 
