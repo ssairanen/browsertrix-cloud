@@ -219,6 +219,9 @@ class CrawlOps(BaseCrawlOps):
             org, delete_list, type_
         )
 
+        if count < 1:
+            raise HTTPException(status_code=404, detail="crawl_not_found")
+
         for cid in cids_to_update:
             await self.crawl_configs.stats_recompute_remove_crawl(cid, size)
             await self.orgs.inc_bytes_stored(org, -size)
