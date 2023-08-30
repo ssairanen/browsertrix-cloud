@@ -451,9 +451,19 @@ export class FileUploader extends LiteElement {
       if (err === ABORT_REASON_USER_CANCEL) {
         console.debug("Fetch crawls aborted to user cancel");
       } else {
+        let message = msg("Sorry, couldn't upload file at this time.");
+        console.debug(err);
+        if (err === ABORT_REASON_QUOTA_REACHED) {
+          message = msg(
+            "The org has reached its storage limit. Delete any archived items that are unneeded to free up space, or contact us to purchase a plan with more storage."
+          );
+          this.dispatchEvent(
+            new CustomEvent("storage-quota-reached", { bubbles: true })
+          );
+        }
         console.debug(err);
         this.notify({
-          message: msg("Sorry, couldn't upload file at this time."),
+          message: message,
           variant: "danger",
           icon: "exclamation-octagon",
         });
@@ -479,6 +489,9 @@ export class FileUploader extends LiteElement {
         if (xhr.status === 200) {
           resolve(JSON.parse(xhr.response));
         }
+        if (xhr.status === 403) {
+          reject(ABORT_REASON_QUOTA_REACHED);
+        }
       });
       xhr.addEventListener("error", () => {
         reject(
@@ -487,18 +500,6 @@ export class FileUploader extends LiteElement {
             status: xhr.status,
           })
         );
-        if (xhr.statusText === ABORT_REASON_QUOTA_REACHED) {
-          this.notify({
-            message: msg(
-              "The org has reached its storage limit. Delete any archived items that are unneeded to free up space, or contact us to purchase a plan with more storage."
-            ),
-            variant: "danger",
-            icon: "exclamation-octagon",
-          });
-          this.dispatchEvent(
-            new CustomEvent("storage-quota-reached", { bubbles: true })
-          );
-        }
       });
       xhr.addEventListener("abort", () => {
         reject(ABORT_REASON_USER_CANCEL);

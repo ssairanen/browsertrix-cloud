@@ -687,7 +687,6 @@ class Organization(BaseMongoModel):
 
         result = self.to_dict(
             exclude_unset=True,
-            exclude_defaults=True,
             exclude_none=True,
             exclude=exclude,
         )
@@ -720,6 +719,7 @@ class OrgOut(BaseMongoModel):
     users: Optional[Dict[str, Any]]
     usage: Optional[Dict[str, int]]
     default: bool = False
+    bytesStored: int
 
     quotas: Optional[OrgQuotas] = OrgQuotas()
 
