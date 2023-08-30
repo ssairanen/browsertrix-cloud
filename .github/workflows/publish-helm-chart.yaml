@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - 1.6.4-work
 
 jobs:
   package_chart:
@@ -32,6 +31,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body: |
+            ## Deployment
+
             This release can be deployed with Helm by running:
 
             ```
