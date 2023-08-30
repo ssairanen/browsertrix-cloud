@@ -22,7 +22,6 @@ from .storages import get_wacz_logs
 from .utils import dt_now, parse_jsonl_error_messages
 from .basecrawls import BaseCrawlOps
 from .models import (
-    CrawlFile,
     UpdateCrawl,
     DeleteCrawlList,
     CrawlConfig,
@@ -43,14 +42,15 @@ class CrawlOps(BaseCrawlOps):
     """Crawl Ops"""
 
     # pylint: disable=too-many-arguments, too-many-instance-attributes, too-many-public-methods
-    def __init__(self, mdb, users, crawl_manager, crawl_configs, orgs):
-        super().__init__(mdb, users, crawl_configs, crawl_manager)
+    def __init__(self, mdb, users, crawl_manager, crawl_configs, orgs, colls):
+        super().__init__(mdb, users, crawl_configs, crawl_manager, colls)
         self.crawls = self.crawls
         self.crawl_configs = crawl_configs
         self.user_manager = users
         self.orgs = orgs
 
         self.crawl_configs.set_crawl_ops(self)
+        self.colls.set_crawl_ops(self)
 
     async def init_index(self):
         """init index for crawls db collection"""
@@ -146,7 +146,7 @@ class CrawlOps(BaseCrawlOps):
             aggregate.extend([{"$match": {"firstSeed": first_seed}}])
 
         if collection_id:
-            aggregate.extend([{"$match": {"collections": {"$in": [collection_id]}}}])
+            aggregate.extend([{"$match": {"collectionIds": {"$in": [collection_id]}}}])
 
         if sort_by:
             if sort_by not in (
@@ -210,25 +210,6 @@ class CrawlOps(BaseCrawlOps):
 
         return crawls, total
 
-    # pylint: disable=arguments-differ
-    async def get_crawl(self, crawlid: str, org: Organization):
-        """Get data for single crawl"""
-
-        res = await self.get_crawl_raw(crawlid, org)
-
-        if res.get("files"):
-            files = [CrawlFile(**data) for data in res["files"]]
-
-            del res["files"]
-
-            res["resources"] = await self._resolve_signed_urls(files, org, crawlid)
-
-        del res["errors"]
-
-        crawl = CrawlOutWithResources.from_dict(res)
-
-        return await self._resolve_crawl_refs(crawl, org)
-
     async def delete_crawls(
         self, org: Organization, delete_list: DeleteCrawlList, type_="crawl"
     ):
@@ -255,12 +236,12 @@ class CrawlOps(BaseCrawlOps):
 
     async def add_new_crawl(self, crawl_id: str, crawlconfig: CrawlConfig, user: User):
         """initialize new crawl"""
-        new_crawl = await add_new_crawl(self.crawls, crawl_id, crawlconfig, user.id)
-        return await set_config_current_crawl_info(
+        return await add_new_crawl(
+            self.crawls,
             self.crawl_configs.crawl_configs,
-            crawlconfig.id,
-            new_crawl["id"],
-            new_crawl["started"],
+            crawl_id,
+            crawlconfig,
+            user.id,
         )
 
     async def update_crawl_scale(
@@ -532,8 +513,14 @@ class CrawlOps(BaseCrawlOps):
 
 
 # ============================================================================
+# pylint: disable=too-many-arguments
 async def add_new_crawl(
-    crawls, crawl_id: str, crawlconfig: CrawlConfig, userid: UUID4, manual=True
+    crawls,
+    crawlconfigs,
+    crawl_id: str,
+    crawlconfig: CrawlConfig,
+    userid: UUID4,
+    manual=True,
 ):
     """initialize new crawl"""
     started = dt_now()
@@ -551,6 +538,7 @@ async def add_new_crawl(
         profileid=crawlconfig.profileid,
         schedule=crawlconfig.schedule,
         crawlTimeout=crawlconfig.crawlTimeout,
+        maxCrawlSize=crawlconfig.maxCrawlSize,
         manual=manual,
         started=started,
         tags=crawlconfig.tags,
@@ -559,7 +547,14 @@ async def add_new_crawl(
 
     try:
         result = await crawls.insert_one(crawl.to_dict())
-        return {"id": str(result.inserted_id), "started": str(started)}
+
+        return await set_config_current_crawl_info(
+            crawlconfigs,
+            crawlconfig.id,
+            result.inserted_id,
+            started,
+        )
+
     except pymongo.errors.DuplicateKeyError:
         # print(f"Crawl Already Added: {crawl.id} - {crawl.state}")
         return False
@@ -627,11 +622,13 @@ async def recompute_crawl_file_count_and_size(crawls, crawl_id):
 
 # ============================================================================
 # pylint: disable=too-many-arguments, too-many-locals, too-many-statements
-def init_crawls_api(app, mdb, users, crawl_manager, crawl_config_ops, orgs, user_dep):
+def init_crawls_api(
+    app, mdb, users, crawl_manager, crawl_config_ops, orgs, colls, user_dep
+):
     """API for crawl management, including crawl done callback"""
     # pylint: disable=invalid-name
 
-    ops = CrawlOps(mdb, users, crawl_manager, crawl_config_ops, orgs)
+    ops = CrawlOps(mdb, users, crawl_manager, crawl_config_ops, orgs, colls)
 
     org_viewer_dep = orgs.org_viewer_dep
     org_crawl_dep = orgs.org_crawl_dep
@@ -782,7 +779,7 @@ def init_crawls_api(app, mdb, users, crawl_manager, crawl_config_ops, orgs, user
         if not user.is_superuser:
             raise HTTPException(status_code=403, detail="Not Allowed")
 
-        return await ops.get_crawl(crawl_id, None)
+        return await ops.get_crawl(crawl_id, None, "crawl")
 
     @app.get(
         "/orgs/{oid}/crawls/{crawl_id}/replay.json",
@@ -790,7 +787,7 @@ def init_crawls_api(app, mdb, users, crawl_manager, crawl_config_ops, orgs, user
         response_model=CrawlOutWithResources,
     )
     async def get_crawl(crawl_id, org: Organization = Depends(org_viewer_dep)):
-        return await ops.get_crawl(crawl_id, org)
+        return await ops.get_crawl(crawl_id, org, "crawl")
 
     @app.get(
         "/orgs/all/crawls/{crawl_id}",
@@ -910,7 +907,7 @@ def init_crawls_api(app, mdb, users, crawl_manager, crawl_config_ops, orgs, user
         logLevel: Optional[str] = None,
         context: Optional[str] = None,
     ):
-        crawl = await ops.get_crawl(crawl_id, org)
+        crawl = await ops.get_crawl(crawl_id, org, "crawl")
 
         log_levels = []
         contexts = []

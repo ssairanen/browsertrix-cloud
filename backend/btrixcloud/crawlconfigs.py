@@ -134,6 +134,11 @@ class CrawlConfigOps:
         data["created"] = datetime.utcnow().replace(microsecond=0, tzinfo=None)
         data["modified"] = data["created"]
 
+        # Ensure page limit is below org maxPagesPerCall if set
+        max_pages = await self.org_ops.get_max_pages_per_crawl(org)
+        if max_pages > 0:
+            data["config"]["limit"] = max_pages
+
         data["profileid"], profile_filename = await self._lookup_profile(
             config.profileid, org
         )
@@ -194,6 +199,9 @@ class CrawlConfigOps:
         )
         changed = changed or (
             self.check_attr_changed(orig_crawl_config, update, "crawlTimeout")
+        )
+        changed = changed or (
+            self.check_attr_changed(orig_crawl_config, update, "maxCrawlSize")
         )
         changed = changed or (
             self.check_attr_changed(orig_crawl_config, update, "crawlFilenameTemplate")
@@ -262,7 +270,7 @@ class CrawlConfigOps:
                 status_code=404, detail=f"Crawl Config '{cid}' not found"
             )
 
-        # update in crawl manager if config, schedule, scale or crawlTimeout changed
+        # update in crawl manager if config, schedule, scale, maxCrawlSize or crawlTimeout changed
         if changed:
             crawlconfig = CrawlConfig.from_dict(result)
             try:

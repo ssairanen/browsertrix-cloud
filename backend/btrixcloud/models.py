@@ -128,6 +128,7 @@ class CrawlConfigIn(BaseModel):
     tags: Optional[List[str]] = []
 
     crawlTimeout: Optional[int] = 0
+    maxCrawlSize: Optional[int] = 0
     scale: Optional[conint(ge=1, le=MAX_CRAWL_SCALE)] = 1
 
     crawlFilenameTemplate: Optional[str]
@@ -146,6 +147,7 @@ class ConfigRevision(BaseMongoModel):
     profileid: Optional[UUID4]
 
     crawlTimeout: Optional[int] = 0
+    maxCrawlSize: Optional[int] = 0
     scale: Optional[conint(ge=1, le=MAX_CRAWL_SCALE)] = 1
 
     modified: datetime
@@ -166,6 +168,7 @@ class CrawlConfigCore(BaseMongoModel):
     tags: Optional[List[str]] = []
 
     crawlTimeout: Optional[int] = 0
+    maxCrawlSize: Optional[int] = 0
     scale: Optional[conint(ge=1, le=MAX_CRAWL_SCALE)] = 1
 
     oid: UUID4
@@ -250,6 +253,7 @@ class UpdateCrawlConfig(BaseModel):
     schedule: Optional[str]
     profileid: Optional[str]
     crawlTimeout: Optional[int]
+    maxCrawlSize: Optional[int]
     scale: Optional[conint(ge=1, le=MAX_CRAWL_SCALE)]
     crawlFilenameTemplate: Optional[str]
     config: Optional[RawCrawlConfig]
@@ -308,10 +312,18 @@ class BaseCrawl(BaseMongoModel):
 
     errors: Optional[List[str]] = []
 
-    collections: Optional[List[UUID4]] = []
+    collectionIds: Optional[List[UUID4]] = []
 
     fileSize: int = 0
     fileCount: int = 0
+
+
+# ============================================================================
+class CollIdName(BaseModel):
+    """Collection id and name object"""
+
+    id: UUID4
+    name: str
 
 
 # ============================================================================
@@ -346,7 +358,7 @@ class CrawlOut(BaseMongoModel):
 
     errors: Optional[List[str]]
 
-    collections: Optional[List[UUID4]] = []
+    collectionIds: Optional[List[UUID4]] = []
 
     # automated crawl fields
     config: Optional[RawCrawlConfig]
@@ -365,6 +377,7 @@ class CrawlOutWithResources(CrawlOut):
     """Crawl output model including resources"""
 
     resources: Optional[List[CrawlFileOut]] = []
+    collections: Optional[List[CollIdName]] = []
 
 
 # ============================================================================
@@ -608,6 +621,7 @@ class OrgQuotas(BaseModel):
     """Organization quotas (settable by superadmin)"""
 
     maxConcurrentCrawls: Optional[int] = 0
+    maxPagesPerCrawl: Optional[int] = 0
 
 
 # ============================================================================

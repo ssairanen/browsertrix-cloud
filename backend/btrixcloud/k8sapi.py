@@ -58,9 +58,8 @@ class K8sAPI:
 
     def get_redis_url(self, crawl_id):
         """get redis url for crawl id"""
-        redis_id = f"redis-{crawl_id}"
         redis_url = (
-            f"redis://{redis_id}-0.{redis_id}.{self.namespace}.svc.cluster.local/0"
+            f"redis://redis-{crawl_id}-0.redis.{self.namespace}.svc.cluster.local/0"
         )
         return redis_url
 
@@ -72,7 +71,7 @@ class K8sAPI:
 
     # pylint: disable=too-many-arguments
     async def new_crawl_job(
-        self, cid, userid, oid, scale=1, crawl_timeout=0, manual=True
+        self, cid, userid, oid, scale=1, crawl_timeout=0, max_crawl_size=0, manual=True
     ):
         """load job template from yaml"""
         if crawl_timeout:
@@ -91,6 +90,7 @@ class K8sAPI:
             "userid": userid,
             "scale": scale,
             "expire_time": crawl_expire_time,
+            "max_crawl_size": max_crawl_size,
             "manual": "1" if manual else "0",
         }
 

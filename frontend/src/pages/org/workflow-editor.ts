@@ -82,6 +82,7 @@ type FormState = {
   behaviorTimeoutSeconds: number | null;
   pageLoadTimeoutSeconds: number | null;
   pageExtraDelaySeconds: number | null;
+  maxCrawlSizeGB: number | null;
   maxScopeDepth: number | null;
   scopeType: WorkflowParams["config"]["scopeType"];
   exclusions: WorkflowParams["config"]["exclude"];
@@ -153,6 +154,7 @@ const getDefaultFormState = (): FormState => ({
   useSitemap: true,
   customIncludeUrlList: "",
   crawlTimeoutMinutes: null,
+  maxCrawlSizeGB: 0,
   behaviorTimeoutSeconds: null,
   pageLoadTimeoutSeconds: null,
   pageExtraDelaySeconds: null,
@@ -213,6 +215,7 @@ const DEFAULT_BEHAVIORS = [
   "autofetch",
   "siteSpecific",
 ];
+const BYTES_PER_GB = 1073741824;
 
 @localized()
 export class CrawlConfigEditor extends LiteElement {
@@ -333,9 +336,12 @@ export class CrawlConfigEditor extends LiteElement {
     });
   }
 
-  willUpdate(changedProperties: Map<string, any>) {
+  async willUpdate(changedProperties: Map<string, any>) {
     if (changedProperties.has("authState") && this.authState) {
-      this.fetchAPIDefaults();
+      await this.fetchAPIDefaults();
+      if (this.orgId) {
+        await this.fetchOrgQuotaDefaults();
+      }
     }
     if (changedProperties.get("initialWorkflow") && this.initialWorkflow) {
       this.initializeEditor();
@@ -359,7 +365,7 @@ export class CrawlConfigEditor extends LiteElement {
       }
     }
     if (changedProperties.get("orgId") && this.orgId) {
-      this.fetchTags();
+      await this.fetchTags();
     }
   }
 
@@ -487,6 +493,12 @@ export class CrawlConfigEditor extends LiteElement {
       return fallback;
     };
 
+    const bytesToGB = (value: any, fallback: number | null) => {
+      if (typeof value === "number" && value > 0)
+        return Math.floor(value / BYTES_PER_GB);
+      return fallback;
+    };
+
     return {
       primarySeedUrl: defaultFormState.primarySeedUrl,
       urlList: defaultFormState.urlList,
@@ -494,6 +506,10 @@ export class CrawlConfigEditor extends LiteElement {
       crawlTimeoutMinutes: secondsToMinutes(
         this.initialWorkflow.crawlTimeout,
         defaultFormState.crawlTimeoutMinutes
+      ),
+      maxCrawlSizeGB: bytesToGB(
+        this.initialWorkflow.maxCrawlSize,
+        defaultFormState.maxCrawlSizeGB
       ),
       behaviorTimeoutSeconds:
         seedsConfig.behaviorTimeout ?? defaultFormState.behaviorTimeoutSeconds,
@@ -1312,6 +1328,22 @@ https://archiveweb.page/images/${"logo.svg"}`}
         msg(`Gracefully stop the crawler after a specified time limit.`)
       )}
       ${this.renderFormCol(html`
+        <sl-input
+          name="maxCrawlSizeGB"
+          label=${msg("Crawl Size Limit")}
+          value=${this.formState.maxCrawlSizeGB || ""}
+          placeholder=${msg("Default: Unlimited")}
+          min="0"
+          type="number"
+          inputmode="numeric"
+        >
+          <span slot="suffix">${msg("GB")}</span>
+        </sl-input>
+      `)}
+      ${this.renderHelpTextCol(
+        msg(`Gracefully stop the crawler after a specified size limit.`)
+      )}
+      ${this.renderFormCol(html`
         <sl-radio-group
           name="scale"
           label=${msg("Crawler Instances")}
@@ -2106,6 +2138,9 @@ https://archiveweb.page/images/${"logo.svg"}`}
       crawlTimeout: this.formState.crawlTimeoutMinutes
         ? this.formState.crawlTimeoutMinutes * 60
         : null,
+      maxCrawlSize: this.formState.maxCrawlSizeGB
+        ? this.formState.maxCrawlSizeGB * BYTES_PER_GB
+        : null,
       tags: this.formState.tags,
       autoAddCollections: this.formState.autoAddCollections,
       config: {
@@ -2226,7 +2261,7 @@ https://archiveweb.page/images/${"logo.svg"}`}
       if (!resp.ok) {
         throw new Error(resp.statusText);
       }
-      const orgDefaults = {
+      let orgDefaults = {
         ...this.orgDefaults,
       };
       const data = await resp.json();
@@ -2238,6 +2273,21 @@ https://archiveweb.page/images/${"logo.svg"}`}
       }
       if (data.maxPagesPerCrawl > 0) {
         orgDefaults.maxPagesPerCrawl = data.maxPagesPerCrawl;
+      }
+      this.orgDefaults = orgDefaults;
+    } catch (e: any) {
+      console.debug(e);
+    }
+  }
+
+  private async fetchOrgQuotaDefaults() {
+    try {
+      const data = await this.apiFetch(`/orgs/${this.orgId}`, this.authState!);
+      let orgDefaults = {
+        ...this.orgDefaults,
+      };
+      if (data.quotas.maxPagesPerCrawl && data.quotas.maxPagesPerCrawl > 0) {
+        orgDefaults.maxPagesPerCrawl = data.quotas.maxPagesPerCrawl;
       }
       this.orgDefaults = orgDefaults;
     } catch (e: any) {
