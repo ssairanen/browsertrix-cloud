@@ -226,7 +226,7 @@ class CrawlOps(BaseCrawlOps):
             await self.crawl_configs.stats_recompute_remove_crawl(cid, size)
             await self.orgs.inc_bytes_stored(org, -size)
 
-        quota_reached = self.orgs.storage_quota_reached(org)
+        quota_reached = await self.orgs.storage_quota_reached(org)
 
         return {"deleted": True, "storageQuotaReached": quota_reached}
 
