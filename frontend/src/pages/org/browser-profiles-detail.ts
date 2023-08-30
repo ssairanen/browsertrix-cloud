@@ -382,7 +382,7 @@ export class BrowserProfilesDetail extends LiteElement {
 
       this.browserId = data.browserid;
       this.isBrowserLoading = false;
-    } catch (e) {
+    } catch (e: any) {
       this.isBrowserLoading = false;
 
       this.notify({
@@ -402,7 +402,7 @@ export class BrowserProfilesDetail extends LiteElement {
     if (prevBrowserId) {
       try {
         await this.deleteBrowser(prevBrowserId);
-      } catch (e) {
+      } catch (e: any) {
         // TODO Investigate DELETE is returning 404
         console.debug(e);
       }
@@ -434,7 +434,7 @@ export class BrowserProfilesDetail extends LiteElement {
           this.profile.description || ""
         )}&profileId=${window.encodeURIComponent(this.profile.id)}&navigateUrl=`
       );
-    } catch (e) {
+    } catch (e: any) {
       this.isBrowserLoading = false;
 
       this.notify({
@@ -486,7 +486,7 @@ export class BrowserProfilesDetail extends LiteElement {
           icon: "check2-circle",
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       this.notify({
         message: msg("Sorry, couldn't delete browser profile at this time."),
         variant: "danger",
@@ -529,7 +529,7 @@ export class BrowserProfilesDetail extends LiteElement {
       const data = await this.getProfile();
 
       this.profile = data;
-    } catch (e) {
+    } catch (e: any) {
       this.notify({
         message: msg("Sorry, couldn't retrieve browser profiles at this time."),
         variant: "danger",
@@ -588,7 +588,7 @@ export class BrowserProfilesDetail extends LiteElement {
       } else {
         throw data;
       }
-    } catch (e) {
+    } catch (e: any) {
       this.notify({
         message: msg("Sorry, couldn't save browser profile at this time."),
         variant: "danger",
@@ -637,7 +637,7 @@ export class BrowserProfilesDetail extends LiteElement {
       } else {
         throw data;
       }
-    } catch (e) {
+    } catch (e: any) {
       let message = msg("Sorry, couldn't save browser profile at this time.");
 
       if (e.isApiError && e.statusCode === 403) {

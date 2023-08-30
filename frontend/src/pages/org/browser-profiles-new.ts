@@ -202,7 +202,7 @@ export class BrowserProfilesNew extends LiteElement {
       });
 
       this.navTo(`/orgs/${this.orgId}/browser-profiles/profile/${data.id}`);
-    } catch (e) {
+    } catch (e: any) {
       this.isSubmitting = false;
       let message = msg("Sorry, couldn't create browser profile at this time.");
 
