@@ -24,7 +24,7 @@ from .models import (
     PaginatedResponse,
     User,
 )
-from .orgs import inc_org_bytes_stored
+from .orgs import inc_org_bytes_stored, storage_quota_reached
 from .pagination import paginated_format, DEFAULT_PAGE_SIZE
 from .storages import get_presigned_url, delete_crawl_file_object
 from .utils import dt_now, get_redis_crawl_stats
@@ -488,7 +488,7 @@ class BaseCrawlOps:
         return crawls, total
 
     async def delete_crawls_all_types(
-        self, delete_list: DeleteCrawlList, org: Optional[Organization] = None
+        self, delete_list: DeleteCrawlList, org: Organization
     ):
         """Delete uploaded crawls"""
         deleted_count, _, _ = await self.delete_crawls(org, delete_list)
@@ -496,7 +496,9 @@ class BaseCrawlOps:
         if deleted_count < 1:
             raise HTTPException(status_code=404, detail="crawl_not_found")
 
-        return {"deleted": True}
+        quota_reached = await storage_quota_reached(self.orgs_db, org.id)
+
+        return {"deleted": True, "storage_quota_reached": quota_reached}
 
     async def get_all_crawl_search_values(
         self, org: Organization, type_: Optional[str] = None

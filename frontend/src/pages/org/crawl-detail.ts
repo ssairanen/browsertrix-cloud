@@ -973,6 +973,12 @@ ${this.crawl?.description}
         }
       );
 
+      if (!data.storage_quota_reached) {
+        this.dispatchEvent(
+          new CustomEvent("storage-quota-not-reached", { bubbles: true })
+        );
+      }
+
       this.navTo(this.listUrl);
       this.notify({
         message: msg(`Successfully deleted crawl`),

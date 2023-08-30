@@ -724,6 +724,12 @@ export class CrawlsList extends LiteElement {
         }
       );
 
+      if (!data.storage_quota_reached) {
+        this.dispatchEvent(
+          new CustomEvent("storage-quota-not-reached", { bubbles: true })
+        );
+      }
+
       const { items, ...crawlsData } = this.archivedItems!;
       this.archivedItems = {
         ...crawlsData,

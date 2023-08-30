@@ -174,16 +174,16 @@ class UploadOps(BaseCrawlOps):
 
         return {"id": crawl_id, "added": True}
 
-    async def delete_uploads(
-        self, delete_list: DeleteCrawlList, org: Optional[Organization] = None
-    ):
+    async def delete_uploads(self, delete_list: DeleteCrawlList, org: Organization):
         """Delete uploaded crawls"""
         deleted_count, _, _ = await self.delete_crawls(org, delete_list, "upload")
 
         if deleted_count < 1:
             raise HTTPException(status_code=404, detail="uploaded_crawl_not_found")
 
-        return {"deleted": True}
+        quota_reached = await storage_quota_reached(self.orgs_db, org.id)
+
+        return {"deleted": True, "storage_quota_reached": quota_reached}
 
 
 # ============================================================================

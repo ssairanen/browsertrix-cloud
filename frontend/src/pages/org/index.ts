@@ -252,6 +252,7 @@ export class Org extends LiteElement {
         workflowId=${this.params.workflowId || ""}
         itemType=${this.params.itemType || "crawl"}
         ?isCrawler=${this.isCrawler}
+        @storage-quota-not-reached=${this.onStorageQuotaNotReached}
       ></btrix-crawl-detail>`;
     }
 
@@ -263,6 +264,8 @@ export class Org extends LiteElement {
       ?isCrawler=${this.isCrawler}
       itemType=${ifDefined(this.params.itemType || undefined)}
       ?shouldFetch=${this.orgTab === "crawls" || this.orgTab === "items"}
+      @storage-quota-reached=${this.onStorageQuotaReached}
+      @storage-quota-not-reached=${this.onStorageQuotaNotReached}
     ></btrix-crawls-list>`;
   }
 
@@ -283,6 +286,7 @@ export class Org extends LiteElement {
           ?isEditing=${isEditing}
           ?isCrawler=${this.isCrawler}
           @storage-quota-reached=${this.onStorageQuotaReached}
+          @storage-quota-not-reached=${this.onStorageQuotaNotReached}
         ></btrix-workflow-detail>
       `;
     }
@@ -318,6 +322,8 @@ export class Org extends LiteElement {
         .authState=${this.authState!}
         .orgId=${this.orgId!}
         profileId=${this.params.browserProfileId}
+        @storage-quota-reached=${this.onStorageQuotaReached}
+        @storage-quota-not-reached=${this.onStorageQuotaNotReached}
       ></btrix-browser-profiles-detail>`;
     }
 
@@ -326,6 +332,7 @@ export class Org extends LiteElement {
         .authState=${this.authState!}
         .orgId=${this.orgId!}
         .browserId=${this.params.browserId}
+        @storage-quota-reached=${this.onStorageQuotaReached}
       ></btrix-browser-profiles-new>`;
     }
 
@@ -333,6 +340,7 @@ export class Org extends LiteElement {
       .authState=${this.authState!}
       .orgId=${this.orgId!}
       ?showCreateDialog=${isNewResourceTab}
+      @storage-quota-not-reached=${this.onStorageQuotaNotReached}
     ></btrix-browser-profiles-list>`;
   }
 
@@ -437,6 +445,10 @@ export class Org extends LiteElement {
 
   private async onStorageQuotaReached(e: CustomEvent) {
     this.orgStorageQuotaReached = true;
+  }
+
+  private async onStorageQuotaNotReached(e: CustomEvent) {
+    this.orgStorageQuotaReached = false;
   }
 
   private async onUserRoleChange(e: UserRoleChangeEvent) {

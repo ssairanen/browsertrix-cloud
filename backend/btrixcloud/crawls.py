@@ -769,7 +769,9 @@ def init_crawls_api(
 
         res = await ops.delete_crawls(org, delete_list)
 
-        return {"deleted": res}
+        quota_reached = await self.orgs.storage_quota_reached(org)
+
+        return {"deleted": res, "storage_quota_reached": quota_reached}
 
     @app.get(
         "/orgs/all/crawls/{crawl_id}/replay.json",

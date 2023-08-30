@@ -474,6 +474,12 @@ export class BrowserProfilesDetail extends LiteElement {
       } else {
         this.navTo(`/orgs/${this.orgId}/browser-profiles`);
 
+        if (!data.storage_quota_reached) {
+          this.dispatchEvent(
+            new CustomEvent("storage-quota-not-reached", { bubbles: true })
+          );
+        }
+
         this.notify({
           message: msg(html`Deleted <strong>${profileName}</strong>.`),
           variant: "success",
@@ -632,8 +638,22 @@ export class BrowserProfilesDetail extends LiteElement {
         throw data;
       }
     } catch (e) {
+      let message = msg("Sorry, couldn't save browser profile at this time.");
+
+      if (e.isApiError && e.statusCode === 403) {
+        if (e.detail === "storage_quota_reached") {
+          message = msg(
+            "The org has reached its storage limit. Delete any archived items that are unneeded to free up space, or contact us to purchase a plan with more storage."
+          );
+          this.dispatchEvent(
+            new CustomEvent("storage-quota-reached", { bubbles: true })
+          );
+        } else {
+          message = msg("You do not have permission to edit browser profiles.");
+        }
+      }
       this.notify({
-        message: msg("Sorry, couldn't save browser profile at this time."),
+        message: message,
         variant: "danger",
         icon: "exclamation-octagon",
       });
