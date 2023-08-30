@@ -256,8 +256,6 @@ class OrgOps:
 # ============================================================================
 async def inc_org_bytes_stored(orgs, oid: uuid.UUID, size: int):
     """Increase org bytesStored count (pass negative value to subtract)."""
-    # TODO: return bool about whether storage quota is exceeded?
-    # for deletion endpoints to return to frontend
     await orgs.find_one_and_update({"_id": oid}, {"$inc": {"bytesStored": size}})
 
 
